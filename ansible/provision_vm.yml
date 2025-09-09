@@ -1,0 +1,138 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install common packages
+      apt:
+        name: ["vim", "git", "curl"]
+        state: present
+
+    - name: Install OpenSSH server
+      ansible.builtin.apt:
+        name: openssh-server
+        state: present
+
+    - name: Ensure SSH service is running and enabled
+      ansible.builtin.service:
+        name: ssh
+        state: started
+        enabled: yes
+
+    # --- Persistence hardening ---
+    - name: Ensure journald uses persistent storage
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/journald.conf
+        regexp: '^#?Storage='
+        line: 'Storage=persistent'
+        create: no
+      notify: Restart journald
+
+    - name: Create vm-sync systemd service (periodic disk sync)
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/vm-sync.service
+        content: |
+          [Unit]
+          Description=Periodic disk sync to ensure data persistence
+
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/sync
+          Nice=19
+          IOSchedulingClass=idle
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Create vm-sync systemd timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/vm-sync.timer
+        content: |
+          [Unit]
+          Description=Run vm-sync.service every minute
+
+          [Timer]
+          OnBootSec=2min
+          OnUnitActiveSec=60s
+          AccuracySec=1s
+
+          [Install]
+          WantedBy=timers.target
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start vm-sync timer
+      ansible.builtin.systemd:
+        name: vm-sync.timer
+        enabled: yes
+        state: started
+
+    - name: Tune kernel writeback settings for quicker commits
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        sysctl_set: yes
+        state: present
+        reload: yes
+      loop:
+        - { name: 'vm.dirty_background_ratio', value: '5' }
+        - { name: 'vm.dirty_ratio', value: '10' }
+        - { name: 'vm.dirty_writeback_centisecs', value: '500' }
+        - { name: 'vm.dirty_expire_centisecs', value: '2000' }
+
+    - name: Run immediate disk sync once
+      ansible.builtin.command: /bin/sync
+      changed_when: false
+
+    - name: Install shutdown sync hook
+      ansible.builtin.copy:
+        dest: /usr/lib/systemd/system-shutdown/10-sync
+        content: |
+          #!/bin/sh
+          # Sync disks on shutdown/reboot for persistence
+          /bin/sync
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copy autobackup script to guest
+      ansible.builtin.copy:
+        src: autobackup.sh
+        dest: /usr/local/sbin/autobackup.sh
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copy autobackup systemd service file to guest
+      ansible.builtin.copy:
+        src: autobackup.service
+        dest: /etc/systemd/system/autobackup.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd daemon to recognize new service
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable the autobackup service
+      ansible.builtin.systemd:
+        name: autobackup.service
+        enabled: yes
+
+  handlers:
+    - name: Restart journald
+      ansible.builtin.systemd:
+        name: systemd-journald
+        state: restarted

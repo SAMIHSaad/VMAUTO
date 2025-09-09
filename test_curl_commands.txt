@@ -1,0 +1,76 @@
+# Curl Commands for Testing VM Creation POST API
+
+# 1. Register user (if needed)
+curl -X POST http://localhost:5000/api/register \
+  -H "Content-Type: application/json" \
+  -d "{\"Nom\": \"Test\", \"Prenom\": \"User\", \"Username\": \"testuser\", \"password\": \"testpass\"}" \
+  -c cookies.txt
+
+# 2. Login to get authentication
+curl -X POST http://localhost:5000/api/login \
+  -H "Content-Type: application/json" \
+  -d "{\"Username\": \"testuser\", \"password\": \"testpass\"}" \
+  -c cookies.txt -b cookies.txt
+
+# 3. Check provider status
+curl -X GET http://localhost:5000/api/providers/status \
+  -H "Content-Type: application/json" \
+  -b cookies.txt
+
+# 4. Get templates
+curl -X GET "http://localhost:5000/api/templates?provider=vmware" \
+  -H "Content-Type: application/json" \
+  -b cookies.txt
+
+# 5. Create VM - Basic Test
+curl -X POST http://localhost:5000/api/vms \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d "{
+    \"vm_name\": \"test-vm-curl-$(date +%Y%m%d-%H%M%S)\",
+    \"provider\": \"vmware\",
+    \"cpu\": 2,
+    \"ram\": 2048,
+    \"disk\": 20,
+    \"os_type\": \"linux\"
+  }" \
+  -v
+
+# 6. Create VM - With Template
+curl -X POST http://localhost:5000/api/vms \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d "{
+    \"vm_name\": \"test-vm-template-$(date +%Y%m%d-%H%M%S)\",
+    \"provider\": \"vmware\",
+    \"template\": \"Ubuntu 64-bit (3)\",
+    \"cpu\": 2,
+    \"ram\": 2048,
+    \"disk\": 20,
+    \"os_type\": \"linux\"
+  }" \
+  -v
+
+# 7. List VMs
+curl -X GET http://localhost:5000/api/vms \
+  -H "Content-Type: application/json" \
+  -b cookies.txt
+
+# PowerShell equivalent commands:
+
+# Register
+Invoke-RestMethod -Uri "http://localhost:5000/api/register" -Method POST -Body '{"Nom": "Test", "Prenom": "User", "Username": "testuser", "password": "testpass"}' -ContentType "application/json" -SessionVariable session
+
+# Login
+Invoke-RestMethod -Uri "http://localhost:5000/api/login" -Method POST -Body '{"Username": "testuser", "password": "testpass"}' -ContentType "application/json" -WebSession $session
+
+# Create VM
+$vmData = @{
+    vm_name = "test-vm-ps-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    provider = "vmware"
+    cpu = 2
+    ram = 2048
+    disk = 20
+    os_type = "linux"
+}
+Invoke-RestMethod -Uri "http://localhost:5000/api/vms" -Method POST -Body ($vmData | ConvertTo-Json) -ContentType "application/json" -WebSession $session

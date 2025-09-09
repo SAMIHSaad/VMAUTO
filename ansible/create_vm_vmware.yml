@@ -1,0 +1,62 @@
+---
+- name: Create VMware Virtual Machine from Template
+  hosts: localhost
+  connection: local
+  become: yes
+  vars:
+    vm_name: "{{ lookup('env', 'VM_NAME') }}"
+    cpu: "{{ lookup('env', 'CPU') | default(2) }}"
+    ram: "{{ lookup('env', 'RAM') | default(2048) }}" # in MB
+    disk_size: "{{ lookup('env', 'SSD') | default(20) }}" # in GB
+    golden_image_path: "/root/demo-automation/templates/Ubuntu 64-bit (3)/Ubuntu 64-bit (3).vmx" # Path to the golden image .vmx
+    ip_address: "{{ lookup('env', 'IP_ADDRESS') }}"
+    vmware_hostname: "localhost" # <<< IMPORTANT: Replace with your VMware host/vCenter
+    vmware_username: "u"     # <<< IMPORTANT: Replace with your VMware username
+    vmware_password: "u"     # <<< IMPORTANT: Replace with your VMware password
+
+  tasks:
+    - name: Ensure pyvmomi is installed
+      ansible.builtin.pip:
+        name: pyvmomi
+        state: present
+
+    - name: Clone VM from template
+      community.vmware.vmware_guest:
+        hostname: "{{ vmware_hostname }}"
+        username: "{{ vmware_username }}"
+        password: "{{ vmware_password }}"
+        validate_certs: no # Set to yes in production with valid certs
+        name: "{{ vm_name }}"
+        template: "{{ golden_image_path }}"
+        state: poweredon
+        disk:
+          - size_gb: "{{ disk_size }}"
+            type: thin
+            datastore: "datastore1" # <<< IMPORTANT: Replace with your datastore name
+        hardware:
+          memory_mb: "{{ ram }}"
+          num_cpus: "{{ cpu }}"
+        networks:
+          - name: "VM Network" # <<< IMPORTANT: Replace with your network label
+            type: static
+            ip: "{{ ip_address }}"
+            netmask: "255.255.255.0" # <<< IMPORTANT: Adjust if needed
+            gateway: "192.168.1.1" # <<< IMPORTANT: Adjust if needed
+            dns_servers: ["8.8.8.8", "8.8.4.4"] # <<< IMPORTANT: Adjust if needed
+        customization:
+          autologon: yes
+          autologon_count: 1
+          dns_servers: ["8.8.8.8", "8.8.4.4"] # <<< IMPORTANT: Adjust if needed
+          domain: "yourdomain.local" # <<< IMPORTANT: Adjust if needed
+          hostname: "{{ vm_name }}"
+          password: "your_vm_password" # <<< IMPORTANT: Set a password for the new VM
+          # For Linux, you might need to use 'network_config' for static IP
+          # For Windows, 'ipsettings' is more common
+          # This example uses a generic approach, you might need to refine based on OS
+      delegate_to: localhost
+      register: vm_creation_result
+
+    - name: Report VM creation status
+      ansible.builtin.debug:
+        msg: "VM '{{ vm_name }}' created and started successfully. IP: {{ ip_address }}"
+      when: vm_creation_result.changed

@@ -1,0 +1,11 @@
+---
+- name: Install web server
+  ansible.builtin.apt:
+    name: "{{ webserver_package | default('nginx') }}"
+    state: present
+
+- name: Start web server
+  ansible.builtin.service:
+    name: "{{ webserver_package | default('nginx') }}"
+    state: started
+    enabled: yes

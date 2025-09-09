@@ -1,0 +1,23 @@
+{
+  "default_provider": "nutanix",
+  "providers": {
+    "vmware": {
+      "enabled": true,
+      "vmrun_path": "C:\\Program Files (x86)\\VMware\\VMware Workstation\\vmrun.exe",
+      "base_directory": "c:\\Users\\saads\\OneDrive\\Documents\\Coding\\Auto-Creation-VM",
+      "templates_directory": "C:\\Users\\saads\\OneDrive\\Documents\\Virtual Machines",
+      "creation_mode_preference": "auto",
+      "skip_fast_mode": false,
+      "data_persistence_priority": true
+    },
+    "nutanix": {
+      "enabled": true,
+      "prism_central_ip": "127.0.0.1",
+      "username": "admin",
+      "password": "nutanix123",
+      "port": 9441,
+      "use_ssl": false,
+      "verify_ssl": false
+    }
+  }
+}
