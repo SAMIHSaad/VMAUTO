@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cookies - VM Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .success {
+            color: #28a745;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .info {
+            color: #6c757d;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍪 Cookie Management</h1>
+        
+        <div class="info">
+            <p>If you're seeing the error <strong>"Subject must be a string"</strong>, it means you have old authentication cookies that need to be cleared.</p>
+            <p>Click the button below to clear all authentication cookies and redirect to the login page.</p>
+        </div>
+        
+        <button class="btn btn-danger" onclick="clearCookiesAndRedirect()">
+            Clear Cookies & Go to Login
+        </button>
+        
+        <div id="status"></div>
+        
+        <div class="info">
+            <p><strong>Alternative:</strong> You can also manually clear your browser cookies for this site:</p>
+            <ul style="text-align: left; display: inline-block;">
+                <li>Chrome/Edge: Press F12 → Application tab → Cookies → Delete all</li>
+                <li>Firefox: Press F12 → Storage tab → Cookies → Delete all</li>
+                <li>Or use Ctrl+Shift+Delete to clear browsing data</li>
+            </ul>
+        </div>
+        
+        <button class="btn" onclick="window.location.href='/login.html'">
+            Go to Login (without clearing cookies)
+        </button>
+    </div>
+
+    <script>
+        function clearCookiesAndRedirect() {
+            // Clear all possible JWT cookies
+            const cookiesToClear = [
+                'access_token_cookie',
+                'refresh_token_cookie', 
+                'csrf_access_token',
+                'csrf_refresh_token'
+            ];
+            
+            cookiesToClear.forEach(cookieName => {
+                // Clear for current path
+                document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+                // Clear for root path (just in case)
+                document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+            });
+            
+            // Show success message
+            document.getElementById('status').innerHTML = '<div class="success">✅ Cookies cleared successfully!</div>';
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 2000);
+        }
+        
+        // Auto-clear cookies if accessed with ?auto parameter
+        if (window.location.search.includes('auto=true')) {
+            clearCookiesAndRedirect();
+        }
+    </script>
+</body>
+</html>

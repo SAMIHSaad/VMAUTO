@@ -1,0 +1,18 @@
+[Unit]
+Description=Automatic VMware Snapshot on Shutdown
+Documentation=https://github.com/your-repo/link-to-docs
+DefaultDependencies=no
+# This service must run before the system shuts down, reboots, or halts.
+# It should also run before networking is shut down, just in case.
+Before=shutdown.target reboot.target halt.target umount.target network-pre.target
+
+[Service]
+Type=oneshot
+# The script to execute.
+ExecStart=/usr/local/sbin/autobackup.sh
+# Keep the process around just long enough for the script to finish.
+RemainAfterExit=yes
+
+[Install]
+# This tells systemd to hook the service into the shutdown process.
+WantedBy=shutdown.target reboot.target halt.target

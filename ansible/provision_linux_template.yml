@@ -1,0 +1,62 @@
+---
+- name: Provision Linux Template
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        upgrade: dist
+
+    
+
+    - name: Install qemu-guest-agent (good to have for general VM management)
+      ansible.builtin.apt:
+        name: qemu-guest-agent
+        state: present
+
+    - name: Clean up apt cache
+      ansible.builtin.apt:
+        autoclean: yes
+        autoremove: yes
+
+    - name: Remove cloud-init artifacts
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/cloud/cloud.cfg.d/subiquity-disable-cloudinit-networking.cfg
+        - /etc/netplan/50-cloud-init.yaml
+        - /var/lib/cloud/seed/nocloud-net/
+        - /var/lib/cloud/instance/
+        - /var/lib/cloud/instances/
+        - /var/log/cloud-init*
+
+    - name: Clean cloud-init logs and cache
+      ansible.builtin.command: cloud-init clean --logs --seed
+
+    - name: Clear bash history
+      ansible.builtin.shell: echo > ~/.bash_history && history -c
+
+    - name: Ensure SSH service is running and enabled
+      ansible.builtin.service:
+        name: ssh
+        state: started
+        enabled: yes
+
+    - name: Disable password authentication for SSH (after initial setup)
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+      notify: Restart sshd
+
+  handlers:
+    - name: Restart sshd
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

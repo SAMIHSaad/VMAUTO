@@ -1,0 +1,330 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- PREAMBULE (Identique à la version précédente) ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{textcomp} % Required for \textbullet
+\usepackage[a4paper,margin=2.2cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\setlength{\headheight}{24pt}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{most}
+
+% --- Définitions de couleurs et commandes (Identiques) ---
+\definecolor{primaryblue}{RGB}{0,102,204}
+\definecolor{secondaryblue}{RGB}{51,153,255}
+\definecolor{lightblue}{RGB}{230,242,255}
+\definecolor{darkblue}{RGB}{0,51,102}
+\definecolor{accentblue}{RGB}{102,178,255}
+\definecolor{grayblue}{RGB}{108,117,125}
+\definecolor{codeblue}{RGB}{0,119,187}
+\definecolor{successgreen}{RGB}{40,167,69}
+\definecolor{warningorange}{RGB}{255,193,7}
+\definecolor{dangerred}{RGB}{220,53,69}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryblue,
+    filecolor=primaryblue,
+    urlcolor=codeblue,
+    citecolor=darkblue,
+    pdftitle={Auto-Creation-VM - Guide Technique et d'Utilisation},
+    pdfauthor={Projet Auto-Creation-VM},
+    pdfsubject={Guide technique et d'utilisation du système multi-hyperviseur},
+    pdfkeywords={VMware, Nutanix, Python, Flask, PowerShell, Virtualisation},
+    bookmarksnumbered=true,
+    bookmarksopen=true,
+    pdfstartview=FitH
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textcolor{primaryblue}{\textbf{Auto-Creation-VM}}}
+\fancyhead[R]{\textcolor{grayblue}{\leftmark}}
+\fancyfoot[L]{\textcolor{grayblue}{\today}}
+\fancyfoot[C]{\textcolor{primaryblue}{\textbf{Guide Technique et d\'Utilisation}}}
+\fancyfoot[R]{\textcolor{grayblue}{Page \thepage\ sur \pageref{LastPage}}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{primaryblue}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{primaryblue}\leaders\hrule height \footrulewidth\hfill}}
+
+\titleformat{\section}{\Large\bfseries\color{primaryblue}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{secondaryblue}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{darkblue}}{\thesubsubsection}{1em}{}
+\titleformat{\paragraph}{\normalsize\bfseries\color{accentblue}}{\theparagraph}{1em}{}
+
+\setlist[itemize,1]{label=\textcolor{primaryblue}{\textbullet}}
+\setlist[itemize,2]{label=\textcolor{secondaryblue}{\textendash}}
+\setlist[enumerate,1]{label=\textcolor{primaryblue}{\arabic*.}}
+
+\newtcolorbox{infobox}[1][]{
+    colback=lightblue,
+    colframe=primaryblue,
+    fonttitle=\bfseries,
+    title=Information,
+    #1
+}
+
+% ... autres boîtes ...
+
+% --- Définitions listings (Identiques) ---
+\lstdefinestyle{bluecode}{
+    basicstyle=\ttfamily\small\color{darkblue},
+    keywordstyle=\bfseries\color{primaryblue},
+    commentstyle=\itshape\color{grayblue},
+    stringstyle=\color{successgreen},
+    numberstyle=\tiny\color{grayblue},
+    identifierstyle=\color{darkblue},
+    backgroundcolor=\color{lightblue},
+    frame=leftline,
+    framerule=3pt,
+    rulecolor=\color{primaryblue},
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=2,
+    columns=fullflexible,
+    keepspaces=true,
+    numbers=left,
+    numbersep=10pt,
+    xleftmargin=15pt,
+    framexleftmargin=10pt,
+    captionpos=b,
+    aboveskip=10pt,
+    belowskip=10pt
+}
+
+\lstdefinelanguage{JSON}{ keywords={true,false,null}, keywordstyle=\color{primaryblue}, stringstyle=\color{successgreen}, morestring=[b]" }
+\lstdefinelanguage{PowerShell}{ keywords={param,begin,process,end,if,else,elseif,switch,foreach,while,do,until,try,catch,finally,throw,function,return,Write-Host,New-Item,Copy-Item,Get-ChildItem,Where-Object,Remove-Item,Join-Path,Get-Date,ConvertFrom-Json,-Action,-TemplateName,-NewVMName,-ClusterName,-VMName}, keywordstyle=\bfseries\color{primaryblue}, commentstyle=\itshape\color{grayblue}, morecomment=[l]{\#}, morestring=[b]", morestring=[b]', sensitive=false }
+\lstdefinestyle{pythonblue}{style=bluecode, language=Python}
+\lstdefinestyle{powershellblue}{style=bluecode, language=PowerShell}
+\lstdefinestyle{bashblue}{style=bluecode, language=bash}
+\lstdefinestyle{jsonblue}{style=bluecode, language=JSON}
+\lstset{style=bluecode}
+
+\newcommand{\blueemph}[1]{\textcolor{primaryblue}{\textbf{#1}}}
+\newcommand{\bluecode}[1]{\textcolor{codeblue}{\texttt{#1}}}
+\newcommand{\bluelink}[2]{\href{#1}{\textcolor{codeblue}{#2}}}
+
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+\renewcommand{\baselinestretch}{1.1}
+
+\begin{document}
+
+% --- Page de Titre (Identique) ---
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries\color{primaryblue}Auto-Creation-VM}
+    \vspace{0.5cm}
+    {\Large\color{secondaryblue}Système de Gestion Multi-Hyperviseur}
+    \vspace{1cm}
+    \textcolor{primaryblue}{\rule{\linewidth}{2pt}}
+    \vspace{1cm}
+    {\LARGE\bfseries\color{darkblue}Guide Technique et d'Utilisation}
+    \vspace{2cm}
+    \begin{tcolorbox}[
+        colback=lightblue,
+        colframe=primaryblue,
+        width=0.8\textwidth,
+        arc=5pt,
+        boxrule=1pt
+    ]
+        \centering
+        \textbf{\color{primaryblue}Technologies Supportées}
+        \vspace{0.5cm}
+        \begin{multicols}{2}
+            \textcolor{darkblue}{\textbf{Hyperviseurs:}}
+            \begin{itemize}[leftmargin=*]
+                \item VMware Workstation
+                \item Nutanix AHV
+            \end{itemize}
+            
+            \textcolor{darkblue}{\textbf{Interfaces:}}
+            \begin{itemize}[leftmargin=*]
+                \item Interface Web (Flask)
+                \item CLI Python
+                \item Scripts PowerShell
+                \item API REST
+            \end{itemize}
+        \end{multicols}
+    \end{tcolorbox}
+    \vfill
+    \textcolor{grayblue}{\small
+        \textbf{Architecture:} Modulaire \textbullet{} \textbf{Langages:} Python, PowerShell, JavaScript \\
+        \textbf{Base de données:} MySQL \textbullet{} \textbf{Authentification:} JWT \textbullet{} \textbf{Tests:} Automatisés
+    }
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+% --- NOUVELLE STRUCTURE COMMENCE ICI ---
+
+\section{Guides d'Utilisation}
+
+\subsection{Démarrage Rapide}
+
+\subsubsection{Installation et Configuration}
+\begin{lstlisting}[language=bash]
+# 1. Cloner le repository
+git clone <url_du_repository>
+cd Auto-Creation-VM
+
+# 2. Installer les dépendances Python
+pip install -r requirements.txt
+
+# 3. Configurer la base de données MySQL (voir section dédiée)
+
+# 4. Configurer les hyperviseurs
+cp hypervisor_config.example.json hypervisor_config.json
+# Éditer hypervisor_config.json avec vos paramètres
+
+# 5. Démarrer l'application
+python app.py
+\end{lstlisting}
+
+\subsubsection{Première Utilisation}
+\begin{enumerate}
+  \item Accéder à l'interface web : \bluecode{http://localhost:5000}.
+  \item Créer un compte utilisateur et se connecter.
+  \item Vérifier le statut des providers dans l'onglet "Paramètres".
+  \item Créer votre première VM via l'onglet "Créer VM".
+\end{enumerate}
+
+\subsection{Utilisation CLI (\texttt{vm\_manager.py})}
+\begin{lstlisting}[language=bash]
+# Lister toutes les VMs
+python vm_manager.py --list
+
+# Créer une nouvelle VM
+python vm_manager.py --create --name "cli-vm-test" --template "ubuntu-template"
+
+# Démarrer une VM
+python vm_manager.py --start --name "cli-vm-test"
+\end{lstlisting}
+
+\subsection{Utilisation PowerShell}
+\begin{lstlisting}[language=powershell]
+# Interface PowerShell vers vm_manager.py
+.\vm_manager.ps1 -Action list
+
+# Clonage VMware avancé
+.\New-VMFromClone.ps1 -TemplateName "ubuntu-template" -NewVMName "ps-vm-test"
+
+# Création VM Nutanix
+.\New-NutanixVM.ps1 -VMName "nutanix-ps-vm" -ClusterName "cluster01"
+\end{lstlisting}
+
+\section{Explication des Fichiers du Projet}
+
+\subsection{Fichiers Principaux}
+\begin{description}
+    \item[\texttt{app.py}] Application Flask principale, point d'entrée de l'API REST et de l'interface web.
+    \item[\texttt{hypervisor\_manager.py}] Couche d'abstraction qui unifie les commandes pour les différents hyperviseurs.
+    \item[\texttt{vm\_manager.py}] Script principal pour l'utilisation en ligne de commande (CLI).
+    \item[\texttt{vm\_organizer.py}] Contient la logique pour organiser les fichiers des VMs après création.
+    \item[\texttt{ip\_manager.py}] Gère l'allocation des adresses IP pour les nouvelles VMs.
+    \item[\texttt{hypervisor\_config.json}] Fichier central de configuration pour les accès aux hyperviseurs.
+\end{description}
+
+\subsection{Providers d'Hyperviseurs (\texttt{hypervisor\_providers/})}
+\begin{description}
+    \item[\texttt{base\_provider.py}] Définit la classe de base que chaque provider doit implémenter.
+    \item[\texttt{vmware\_provider.py}] Implémentation spécifique pour VMware Workstation (via \texttt{vmrun}).
+    \item[\texttt{nutanix\_provider.py}] Implémentation spécifique pour Nutanix AHV (via l'API REST).
+\end{description}
+
+\subsection{Interface Web (\texttt{frontend/})}
+\begin{description}
+    \item[\texttt{index.html}] Page principale de l'application (tableau de bord).
+    \item[\texttt{script.js}] Contient toute la logique JavaScript pour interagir avec l'API.
+    \item[\texttt{style.css}] Feuille de style principale.
+\end{description}
+
+\section{Architecture Technique}
+
+\subsection{Diagramme Simplifié}
+\begin{lstlisting}[language=,basicstyle={\small\ttfamily}]
++-------------------------------------------------------------+
+|                    COUCHE PRÉSENTATION                     |
+|      (Interface Web, CLI Python, Scripts PowerShell)        |
++-------------------------------------------------------------+
+                             |
++-------------------------------------------------------------+
+|                     COUCHE MÉTIER                          |
+|      (HypervisorManager, Logique d'application)            |
++-------------------------------------------------------------+
+                             |
++-------------------------------------------------------------+
+|                 COUCHE ABSTRACTION (Providers)             |
+|      (VMwareProvider, NutanixProvider)                     |
++-------------------------------------------------------------+
+                             |
++-------------------------------------------------------------+
+|                  COUCHE INFRASTRUCTURE                     |
+|      (VMware Workstation, Nutanix AHV, MySQL)              |
++-------------------------------------------------------------+
+\end{lstlisting}
+
+\section{API REST}
+
+\subsection{Endpoints Principaux}
+\begin{description}
+    \item[\texttt{GET /api/vms}] Lister toutes les machines virtuelles.
+    \item[\texttt{POST /api/vms}] Créer une nouvelle machine virtuelle.
+    \item[\texttt{POST /api/vms/clone}] Cloner une machine virtuelle.
+    \item[\texttt{POST /api/vms/\{name\}/start}] Démarrer une VM.
+    \item[\texttt{POST /api/vms/\{name\}/stop}] Arrêter une VM.
+    \item[\texttt{DELETE /api/vms/\{name\}}] Supprimer une VM.
+    \item[\texttt{GET /api/providers/status}] Obtenir le statut des hyperviseurs.
+\end{description}
+
+\section{Configuration}
+
+\subsection{Configuration \texttt{hypervisor\_config.json}}
+Ce fichier est crucial. Vous devez y renseigner les informations de connexion à vos hyperviseurs.
+
+\subsubsection{Exemple pour VMware}
+\begin{lstlisting}[style=jsonblue]
+"vmware": {
+    "vmrun_path": "C:/Program Files (x86)/VMware/VMware Workstation/vmrun.exe",
+    "templates_directory": "C:/VM_Templates",
+    "default_vm_directory": "C:/VMs"
+}
+\end{lstlisting}
+
+\subsubsection{Exemple pour Nutanix}
+\begin{lstlisting}[style=jsonblue]
+"nutanix": {
+    "prism_central_ip": "10.0.0.100",
+    "port": 9440,
+    "username": "admin",
+    "password": "password",
+    "default_cluster": "cluster01"
+}
+\end{lstlisting}
+
+\end{document}

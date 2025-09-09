@@ -1,0 +1,7 @@
+{
+  "base_url": "https://PRISM-CENTRAL-OR-ELEMENT:9440",
+  "username": "admin",
+  "password": "YOUR_PASSWORD",
+  "verify_ssl": false,
+  "project_uuid": null
+}

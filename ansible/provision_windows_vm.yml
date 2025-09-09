@@ -1,0 +1,57 @@
+---
+- name: Provision Windows Server 2022 VM
+  hosts: windows_vms
+  gather_facts: false
+  connection: winrm
+  vars:
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_read_timeout_sec: 600
+    ansible_winrm_operation_timeout_sec: 300
+    ansible_user: Administrator
+    ansible_password: Password123 # IMPORTANT: Change this to the password set in autounattend.xml
+
+  tasks:
+    - name: Wait for WinRM to be available
+      ansible.windows.win_wait_for_connection:
+        timeout: 600
+
+    - name: Ensure WinRM service is running and configured
+      ansible.windows.win_service:
+        name: WinRM
+        state: started
+        start_mode: auto
+
+    - name: Install .NET Framework 3.5 (required by some Windows features)
+      ansible.windows.win_feature:
+        name: NetFx3
+        state: present
+
+    - name: Install Web Server (IIS) role
+      ansible.windows.win_feature:
+        name: Web-Server
+        state: present
+
+    - name: Display a message after provisioning
+      ansible.windows.win_msg:
+        msg: "Windows Server 2022 VM provisioned successfully!"
+
+    # Add more provisioning tasks here, e.g.:
+    # - name: Install Chocolatey
+    #   ansible.windows.win_chocolatey:
+    #     name: chocolatey
+    #     state: present
+
+    # - name: Install Git using Chocolatey
+    #   ansible.windows.win_chocolatey:
+    #     name: git
+    #     state: present
+
+    # - name: Configure Windows Firewall
+    #   ansible.windows.win_firewall_rule:
+    #     name: Allow HTTP
+    #     localport: 80
+    #     action: allow
+    #     direction: in
+    #     protocol: tcp
+    #     state: present

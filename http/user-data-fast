@@ -1,0 +1,71 @@
+#cloud-config
+autoinstall:
+  version: 1
+  
+  # Use default locale for faster installation
+  locale: en_US.UTF-8
+  
+  # Use default keyboard layout
+  keyboard:
+    layout: us
+  
+  # Automatic network configuration
+  network:
+    network:
+      version: 2
+      ethernets:
+        ens33:
+          dhcp4: true
+  
+  # Simple storage configuration - fastest option
+  storage:
+    layout:
+      name: direct
+      match:
+        size: largest
+  
+  # Auto-create ubuntu user with ubuntu password
+  identity:
+    hostname: ubuntu-vm
+    username: ubuntu
+    password: "ubuntu"
+  
+  # SSH configuration - minimal setup
+  ssh:
+    install-server: true
+    allow-pw: true
+    authorized-keys: []
+    disable_root: false
+  
+  # Minimal packages for fastest installation
+  packages:
+    - openssh-server
+  
+  # Skip all interactive prompts
+  interactive-sections: []
+  
+  # Minimal early commands
+  early-commands:
+    - systemctl enable ssh
+  
+  # Minimal user configuration
+  user-data:
+    disable_root: false
+    users:
+      - name: ubuntu
+        passwd: "ubuntu"
+        groups: [adm, sudo]
+        lock_passwd: false
+        sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+        shell: /bin/bash
+    
+    # Minimal run commands
+    runcmd:
+      - systemctl start ssh
+      - sync
+  
+  # Minimal late commands
+  late-commands:
+    - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
+    - chmod 440 /target/etc/sudoers.d/ubuntu
+    - sync

@@ -1,0 +1,61 @@
+#cloud-config
+autoinstall:
+  version: 1
+  
+  # Set locale
+  locale: en_US.UTF-8
+  
+  # Configure keyboard layout
+  keyboard:
+    layout: us
+    variant: ""
+    toggle: null
+  
+  # Automatic network configuration
+  network:
+    network:
+      version: 2
+      ethernets:
+        ens33:
+          dhcp4: true
+  
+  # Automatic storage configuration - use entire disk
+  storage:
+    layout:
+      name: direct
+      match:
+        size: largest
+  
+  # Auto-create ubuntu user with ubuntu password
+  identity:
+    hostname: ubuntu-vm
+    username: ubuntu
+    password: "$6$rounds=4096$saltsalt$L9tjczoIVjIaLZC4hO7tbQZl9lfV6DaqQQdOUt4zr8RjQjFyPb.fQ8gqjOUQQmKvhx8W7qzJqVqVqVqVqVqVq1"
+  
+  # SSH configuration - ensure SSH is available immediately
+  ssh:
+    install-server: true
+    allow-pw: true
+    authorized-keys: []
+    disable_root: false
+  
+  # Essential packages only - minimize installation time
+  packages:
+    - openssh-server
+    - curl
+    - open-vm-tools
+  
+  # Skip all interactive prompts and configuration screens
+  interactive-sections: []
+  
+  # Early commands to ensure system is ready
+  early-commands:
+    - echo "Starting early commands"
+  
+  # Minimal late commands for faster installation
+  late-commands:
+    - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
+    - chmod 440 /target/etc/sudoers.d/ubuntu
+    - chroot /target systemctl enable ssh
+    - echo "ubuntu:ubuntu" | chroot /target chpasswd
+    - sync

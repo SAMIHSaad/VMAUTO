@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Hypervisor VM Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <img src="ACAPS.jpg" alt="ACAPS Logo" class="logo">
+        <h1>Multi-Hypervisor VM Management</h1>
+        <div class="user-info">
+            <span id="user-name"></span>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+        </div>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
+        <button class="tab-btn" onclick="showTab('create-vm')">Create VM</button>
+        <button class="tab-btn" onclick="showTab('vm-list')">VM List</button>
+        <button class="tab-btn" onclick="showTab('settings')">Settings</button>
+    </nav>
+
+    <main class="content">
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Hypervisor Status</h3>
+                    <div id="provider-status">
+                        <div class="skeleton-loader" id="provider-status-skeleton">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                        </div>
+                        <div id="provider-status-content" style="display: none;">
+                            <!-- Content will be dynamically loaded here by script.js -->
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>VM Statistics</h3>
+                    <div id="vm-stats">
+                        <div class="skeleton-loader" id="vm-stats-skeleton">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                        </div>
+                        <div id="vm-stats-content" style="display: none;">
+                            <!-- Content will be dynamically loaded here by script.js -->
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Recent Activity</h3>
+                    <div id="recent-activity">
+                        <p>No recent activity</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create VM Tab -->
+        <div id="create-vm" class="tab-content">
+            <h2>Create VM</h2>
+            <form id="clone-vm-form" class="vm-form">
+                <div class="form-group">
+                    <label for="clone-provider">Hypervisor Platform:</label>
+                    <select id="clone-provider" name="provider" required onchange="updateCloneFormOptions()">
+                        <option value="">Select Platform</option>
+                        <option value="vmware">VMware Workstation</option>
+                        <option value="nutanix">Nutanix AHV</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="clone-source-vm">Source VM:</label>
+                    <select id="clone-source-vm" name="source_vm" required>
+                        <option value="">Select Source VM</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="clone-vm-name">New VM Name:</label>
+                    <input type="text" id="clone-vm-name" name="vm_name" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clone-cpu">CPU Cores:</label>
+                        <input type="number" id="clone-cpu" name="cpu" value="2" min="1" max="32">
+                    </div>
+                    <div class="form-group">
+                        <label for="clone-ram">RAM (MB):</label>
+                        <input type="number" id="clone-ram" name="ram" value="2048" min="512" step="512">
+                    </div>
+                    <div class="form-group">
+                        <label for="clone-disk">Disk Size (GB):</label>
+                        <input type="number" id="clone-disk" name="disk" value="20" min="10">
+                    </div>
+                </div>
+
+                <!-- Nutanix specific options -->
+                <div id="nutanix-clone-options" class="nutanix-options" style="display: none;">
+                    <div class="form-group">
+                        <label for="clone-cluster">Cluster:</label>
+                        <select id="clone-cluster" name="cluster">
+                            <option value="">Select Cluster</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="clone-network">Network:</label>
+                        <select id="clone-network" name="network">
+                            <option value="">Select Network</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create VM</button>
+            </form>
+        </div>
+
+        <!-- VM List Tab -->
+        <div id="vm-list" class="tab-content">
+            <h2>Virtual Machines</h2>
+            <div class="vm-controls">
+                <div class="filter-group">
+                    <label for="filter-provider">Filter by Provider:</label>
+                    <select id="filter-provider" onchange="filterVMs()">
+                        <option value="">All Providers</option>
+                        <option value="vmware">VMware</option>
+                        <option value="nutanix">Nutanix</option>
+                    </select>
+                </div>
+                <button onclick="refreshVMList()" class="btn btn-secondary">Refresh</button>
+            </div>
+            <div id="vm-table-container">
+                <table id="vm-table" class="vm-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Provider</th>
+                            <th>State</th>
+                            <th>CPU</th>
+                            <th>RAM (MB)</th>
+                            <th>IP Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vm-table-body">
+                        <!-- VM rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <h2>Settings</h2>
+            <div class="settings-grid">
+                <div class="card">
+                    <h3>VMware Configuration</h3>
+                    <form id="vmware-config-form">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="vmware-enabled"> Enable VMware Provider
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="vmware-vmrun-path">VMRun Path:</label>
+                            <input type="text" id="vmware-vmrun-path" placeholder="C:\Program Files (x86)\VMware\VMware Workstation\vmrun.exe">
+                        </div>
+                        <div class="form-group">
+                            <label for="vmware-templates-dir">Templates Directory:</label>
+                            <input type="text" id="vmware-templates-dir" placeholder="C:\Users\...\Virtual Machines">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save VMware Config</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Nutanix Configuration</h3>
+                    <form id="nutanix-config-form">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="nutanix-enabled"> Enable Nutanix Provider
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="nutanix-pc-ip">Prism Central IP:</label>
+                            <input type="text" id="nutanix-pc-ip" placeholder="10.0.0.100">
+                        </div>
+                        <div class="form-group">
+                            <label for="nutanix-pe-ip">Prism Element IP:</label>
+                            <input type="text" id="nutanix-pe-ip" placeholder="10.0.0.101">
+                        </div>
+                        <div class="form-group">
+                            <label for="nutanix-username">Username:</label>
+                            <input type="text" id="nutanix-username" placeholder="admin">
+                        </div>
+                        <div class="form-group">
+                            <label for="nutanix-password">Password:</label>
+                            <input type="password" id="nutanix-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="nutanix-port">Port:</label>
+                            <input type="number" id="nutanix-port" value="9440">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Nutanix Config</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>General Settings</h3>
+                    <form id="general-settings-form">
+                        <div class="form-group">
+                            <label for="default-provider">Default Provider:</label>
+                            <select id="default-provider">
+                                <option value="vmware">VMware</option>
+                                <option value="nutanix">Nutanix</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save General Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <!-- Notification area -->
+    <div id="notification-area" class="notification-area"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

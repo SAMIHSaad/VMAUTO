@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Registration Frontend</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Registration Frontend Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Registration Form Submission</h2>
+        <form id="testRegisterForm">
+            <div>
+                <label for="Nom">Nom:</label>
+                <input type="text" id="Nom" name="Nom" value="Frontend" required>
+            </div>
+            <div>
+                <label for="Prenom">Prenom:</label>
+                <input type="text" id="Prenom" name="Prenom" value="Test" required>
+            </div>
+            <div>
+                <label for="Username">Username:</label>
+                <input type="text" id="Username" name="Username" value="frontendtest123" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" value="testpass123" required>
+            </div>
+            <button type="submit">Test Register</button>
+        </form>
+        <div id="testResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Links to Actual Pages</h2>
+        <p><a href="http://localhost:5000/register.html" target="_blank">Open Registration Page</a></p>
+        <p><a href="http://localhost:5000/login.html" target="_blank">Open Login Page</a></p>
+        <p><a href="http://localhost:5000/" target="_blank">Open Main Page</a></p>
+    </div>
+
+    <script>
+        // Test the registration functionality
+        function handleTestRegister(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const registerData = {
+                Nom: formData.get('Nom'),
+                Prenom: formData.get('Prenom'),
+                Username: formData.get('Username'),
+                password: formData.get('password')
+            };
+
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.innerHTML = '<p class="info">Testing registration...</p>';
+
+            fetch('http://localhost:5000/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(registerData),
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Registration failed');
+                    });
+                }
+            })
+            .then(data => {
+                resultDiv.innerHTML = `<p class="success">✅ Registration successful: ${data.message}</p>`;
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<p class="error">❌ Registration failed: ${error.message}</p>`;
+            });
+        }
+
+        // Add event listener
+        document.getElementById('testRegisterForm').addEventListener('submit', handleTestRegister);
+    </script>
+</body>
+</html>
